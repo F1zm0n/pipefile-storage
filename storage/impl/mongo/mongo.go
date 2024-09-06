@@ -1,0 +1,104 @@
+package mgstore
+
+import (
+	"context"
+	"errors"
+	"github.com/F1zm0n/pipefile-storer/storage/error"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+)
+
+var (
+	ErrMongoConnection    = errors.New("error connecting to mongo")
+	ErrMongoIndexCreation = errors.New("error creating mongo index on field")
+)
+
+type MongoStorerConfig struct {
+	uri        string
+	collection string
+	database   string
+}
+
+type MongoOpt func(config *MongoStorerConfig)
+
+type MongoStorage struct {
+	col *mongo.Collection
+}
+
+func NewMongoStorerConfig(opts ...MongoOpt) MongoStorerConfig {
+	cfg := &MongoStorerConfig{
+		uri:        "mongodb://localhost:27017",
+		collection: "pipefile",
+		database:   "pipefile",
+	}
+	for _, o := range opts {
+		o(cfg)
+	}
+
+	return *cfg
+}
+
+func NewMongoStorage(ctx context.Context, cfg MongoStorerConfig) (MongoStorage, error) {
+	client, err := mongo.Connect(options.Client().ApplyURI(cfg.uri))
+	if err != nil {
+		return MongoStorage{}, errors.Join(ErrMongoConnection, err)
+	}
+
+	collection := client.Database(cfg.database).Collection(cfg.collection)
+
+	storage := MongoStorage{
+		col: collection,
+	}
+	if err = storage.createIndex(ctx, "key"); err != nil {
+		return MongoStorage{}, err
+	}
+
+	return storage, nil
+}
+
+func (m MongoStorage) createIndex(ctx context.Context, fieldName string) error {
+	idxModel := mongo.IndexModel{
+		Keys: bson.D{{fieldName, 1}},
+	}
+	_, err := m.col.Indexes().CreateOne(ctx, idxModel)
+
+	return errors.Join(ErrMongoIndexCreation, err)
+}
+
+type PipefileModel struct {
+	Key      string `bson:"key"`
+	FileData []byte `bson:"file_data"`
+}
+
+func (m MongoStorage) Get(ctx context.Context, key string) ([]byte, error) {
+
+	var mod PipefileModel
+
+	err := m.col.FindOne(ctx, bson.D{{"key", key}}).Decode(&mod)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, apperror.ErrEntryNotFound
+		}
+		return nil, errors.Join(apperror.ErrUnknownStorageError, err)
+	}
+
+	return mod.FileData, nil
+}
+
+func (m MongoStorage) Put(ctx context.Context, key string, data []byte) error {
+	mod := PipefileModel{
+		Key:      key,
+		FileData: data,
+	}
+	_, err := m.col.InsertOne(ctx, mod)
+	if err != nil {
+		return errors.Join(apperror.ErrUnknownStorageError, err)
+	}
+
+	return nil
+}
+
+func (m MongoStorage) Close(ctx context.Context) error {
+	return m.col.Database().Client().Disconnect(ctx)
+}
