@@ -1,4 +1,4 @@
-module github.com/F1zm0n/pipefile-storer
+module github.com/F1zm0n/pipefile-storage
 
 go 1.23.0
 

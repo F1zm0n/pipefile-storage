@@ -3,7 +3,7 @@ package mgstore
 import (
 	"context"
 	"errors"
-	"github.com/F1zm0n/pipefile-storer/storage/error"
+	"github.com/F1zm0n/pipefile-storage/storage/error"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -14,20 +14,20 @@ var (
 	ErrMongoIndexCreation = errors.New("error creating mongo index on field")
 )
 
-type MongoStorerConfig struct {
+type MongoStorageConfig struct {
 	uri        string
 	collection string
 	database   string
 }
 
-type MongoOpt func(config *MongoStorerConfig)
+type MongoOpt func(config *MongoStorageConfig)
 
 type MongoStorage struct {
 	col *mongo.Collection
 }
 
-func NewMongoStorerConfig(opts ...MongoOpt) MongoStorerConfig {
-	cfg := &MongoStorerConfig{
+func NewMongoStorageConfig(opts ...MongoOpt) MongoStorageConfig {
+	cfg := &MongoStorageConfig{
 		uri:        "mongodb://localhost:27017",
 		collection: "pipefile",
 		database:   "pipefile",
@@ -39,7 +39,7 @@ func NewMongoStorerConfig(opts ...MongoOpt) MongoStorerConfig {
 	return *cfg
 }
 
-func NewMongoStorage(ctx context.Context, cfg MongoStorerConfig) (MongoStorage, error) {
+func NewMongoStorage(ctx context.Context, cfg MongoStorageConfig) (MongoStorage, error) {
 	client, err := mongo.Connect(options.Client().ApplyURI(cfg.uri))
 	if err != nil {
 		return MongoStorage{}, errors.Join(ErrMongoConnection, err)
@@ -50,6 +50,7 @@ func NewMongoStorage(ctx context.Context, cfg MongoStorerConfig) (MongoStorage, 
 	storage := MongoStorage{
 		col: collection,
 	}
+
 	if err = storage.createIndex(ctx, "key"); err != nil {
 		return MongoStorage{}, err
 	}
