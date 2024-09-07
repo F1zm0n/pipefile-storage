@@ -3,7 +3,8 @@ package mgstore
 import (
 	"context"
 	"errors"
-	"github.com/F1zm0n/pipefile-storage/storage/error"
+
+	apperror "github.com/F1zm0n/pipefile-storage/storage/error"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -22,10 +23,32 @@ type MongoStorageConfig struct {
 
 type MongoOpt func(config *MongoStorageConfig)
 
+func WithUri(uri string) MongoOpt {
+	return func(config *MongoStorageConfig) {
+		config.uri = uri
+	}
+}
+
+func WithCollection(col string) MongoOpt {
+	return func(config *MongoStorageConfig) {
+		config.collection = col
+	}
+}
+
+func WithDatabase(db string) MongoOpt {
+	return func(config *MongoStorageConfig) {
+		config.database = db
+	}
+}
+
 type MongoStorage struct {
 	col *mongo.Collection
 }
 
+// NewMongoStorageConfig has default values
+// uri:        "mongodb://localhost:27017",
+// collection: "pipefile",
+// database:   "pipefile",
 func NewMongoStorageConfig(opts ...MongoOpt) MongoStorageConfig {
 	cfg := &MongoStorageConfig{
 		uri:        "mongodb://localhost:27017",
