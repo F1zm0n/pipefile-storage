@@ -66,7 +66,7 @@ func NewMongoStorageConfig(opts ...MongoOpt) MongoStorageConfig {
 	cfg := &MongoStorageConfig{
 		uri:        "mongodb://localhost:27017",
 		collection: "pipefile",
-		database:   "pipefile",
+		database:   "admin",
 		creds: MongoStorageCredentials{
 			Password:   "admin",
 			Username:   "admin",
@@ -82,10 +82,9 @@ func NewMongoStorageConfig(opts ...MongoOpt) MongoStorageConfig {
 
 func NewMongoStorage(ctx context.Context, cfg MongoStorageConfig) (MongoStorage, error) {
 	client, err := mongo.Connect(options.Client().ApplyURI(cfg.uri).SetAuth(options.Credential{
-		AuthMechanism: "SCRAM-SHA-256",
-		Username:      cfg.creds.Username,
-		Password:      cfg.creds.Password,
-		AuthSource:    cfg.creds.AuthSource,
+		Username:   cfg.creds.Username,
+		Password:   cfg.creds.Password,
+		AuthSource: cfg.creds.AuthSource,
 	}))
 
 	if err != nil {
