@@ -109,8 +109,11 @@ func (m MongoStorage) createIndex(ctx context.Context, fieldName string) error {
 		Keys: bson.D{{fieldName, 1}},
 	}
 	_, err := m.col.Indexes().CreateOne(ctx, idxModel)
+	if err != nil {
+		return errors.Join(ErrMongoIndexCreation, err)
+	}
 
-	return errors.Join(ErrMongoIndexCreation, err)
+	return err
 }
 
 type PipefileModel struct {
