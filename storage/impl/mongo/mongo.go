@@ -23,8 +23,9 @@ type MongoStorageConfig struct {
 }
 
 type MongoStorageCredentials struct {
-	Username string
-	Password string
+	Username   string
+	Password   string
+	AuthSource string
 }
 
 type MongoOpt func(config *MongoStorageConfig)
@@ -67,8 +68,9 @@ func NewMongoStorageConfig(opts ...MongoOpt) MongoStorageConfig {
 		collection: "pipefile",
 		database:   "pipefile",
 		creds: MongoStorageCredentials{
-			Password: "admin",
-			Username: "admin",
+			Password:   "admin",
+			Username:   "admin",
+			AuthSource: "admin",
 		},
 	}
 	for _, o := range opts {
@@ -83,7 +85,7 @@ func NewMongoStorage(ctx context.Context, cfg MongoStorageConfig) (MongoStorage,
 		AuthMechanism: "SCRAM-SHA-256",
 		Username:      cfg.creds.Username,
 		Password:      cfg.creds.Password,
-		AuthSource:    cfg.database,
+		AuthSource:    cfg.creds.AuthSource,
 	}))
 
 	if err != nil {
