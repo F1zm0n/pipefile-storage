@@ -83,6 +83,7 @@ func NewMongoStorage(ctx context.Context, cfg MongoStorageConfig) (MongoStorage,
 		AuthMechanism: "SCRAM-SHA-256",
 		Username:      cfg.creds.Username,
 		Password:      cfg.creds.Password,
+		AuthSource:    cfg.database,
 	}))
 
 	if err != nil {
