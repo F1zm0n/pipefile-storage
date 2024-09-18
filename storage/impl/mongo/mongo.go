@@ -23,7 +23,6 @@ type MongoStorageConfig struct {
 }
 
 type MongoStorageCredentials struct {
-	AuthDb   string
 	Username string
 	Password string
 }
@@ -68,7 +67,6 @@ func NewMongoStorageConfig(opts ...MongoOpt) MongoStorageConfig {
 		collection: "pipefile",
 		database:   "pipefile",
 		creds: MongoStorageCredentials{
-			AuthDb:   "pipefile",
 			Password: "admin",
 			Username: "admin",
 		},
