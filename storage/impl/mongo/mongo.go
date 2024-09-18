@@ -19,6 +19,13 @@ type MongoStorageConfig struct {
 	uri        string
 	collection string
 	database   string
+	creds      MongoStorageCredentials
+}
+
+type MongoStorageCredentials struct {
+	AuthDb   string
+	Username string
+	Password string
 }
 
 type MongoOpt func(config *MongoStorageConfig)
@@ -41,6 +48,12 @@ func WithDatabase(db string) MongoOpt {
 	}
 }
 
+func WithAuthentication(creds MongoStorageCredentials) MongoOpt {
+	return func(config *MongoStorageConfig) {
+		config.creds = creds
+	}
+}
+
 type MongoStorage struct {
 	col *mongo.Collection
 }
@@ -54,6 +67,11 @@ func NewMongoStorageConfig(opts ...MongoOpt) MongoStorageConfig {
 		uri:        "mongodb://localhost:27017",
 		collection: "pipefile",
 		database:   "pipefile",
+		creds: MongoStorageCredentials{
+			AuthDb:   "pipefile",
+			Password: "admin",
+			Username: "admin",
+		},
 	}
 	for _, o := range opts {
 		o(cfg)
@@ -63,7 +81,11 @@ func NewMongoStorageConfig(opts ...MongoOpt) MongoStorageConfig {
 }
 
 func NewMongoStorage(ctx context.Context, cfg MongoStorageConfig) (MongoStorage, error) {
-	client, err := mongo.Connect(options.Client().ApplyURI(cfg.uri))
+	client, err := mongo.Connect(options.Client().ApplyURI(cfg.uri).SetAuth(options.Credential{
+		AuthSource: cfg.creds.AuthDb,
+		Username:   cfg.creds.Username,
+		Password:   cfg.creds.Password,
+	}))
 	if err != nil {
 		return MongoStorage{}, errors.Join(ErrMongoConnection, err)
 	}
