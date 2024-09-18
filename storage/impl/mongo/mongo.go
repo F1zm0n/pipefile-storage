@@ -81,7 +81,6 @@ func NewMongoStorageConfig(opts ...MongoOpt) MongoStorageConfig {
 func NewMongoStorage(ctx context.Context, cfg MongoStorageConfig) (MongoStorage, error) {
 	client, err := mongo.Connect(options.Client().ApplyURI(cfg.uri).SetAuth(options.Credential{
 		AuthMechanism: "SCRAM-SHA-256",
-		AuthSource:    cfg.creds.AuthDb,
 		Username:      cfg.creds.Username,
 		Password:      cfg.creds.Password,
 	}))
