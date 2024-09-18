@@ -50,7 +50,9 @@ func WithDatabase(db string) MongoOpt {
 
 func WithAuthentication(creds MongoStorageCredentials) MongoOpt {
 	return func(config *MongoStorageConfig) {
-		config.creds = creds
+		config.creds.AuthSource = creds.AuthSource
+		config.creds.Password = creds.Password
+		config.creds.Username = creds.Username
 	}
 }
 
